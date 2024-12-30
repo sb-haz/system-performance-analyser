@@ -23,12 +23,13 @@ public class SearchController {
     @PostMapping("execute")
     public ResponseEntity<SearchResult> executeSearch(@RequestBody SearchRequest request) {
         try {
+            System.out.println("Received request");
+            System.out.println(request.getAlgorithm());
             SearchResult result = searchService.orchestrateSearch(request);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }
     }
-
 
 }

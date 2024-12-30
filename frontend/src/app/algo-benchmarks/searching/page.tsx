@@ -1,55 +1,93 @@
 "use client"
 
 import { useState } from 'react'
-import Button from '@/components/ui/Button'
+import CodeModal from '@/components/ui/CodeModal'
+import { searchImplementations } from './searchImplementations'
 
 export default function Searching() {
-    // Test Settings State
-    const [numsToSort, setNumsToSearch] = useState("1,2,3,4,5,6,7,8,9,10")
-    const [numTarget, setNumTarget] = useState("1")
-    const [searchMethod, setSearchMethod] = useState("linear")
-    const [languageType, setLanguageType] = useState("java")
+    // test settings
+    const [numArray, setNumArray] = useState("1,2,3,4,5,6,7,8,9,10")
+    const [numTarget, setNumTarget] = useState<number>(1)
+    type Algorithm = "linear" | "binary" | "jump" | "interpolation"
+    const [algorithm, setAlgorithm] = useState<Algorithm>("linear")
+    type Language = "java" | "python" | "javascript" | "csharp"
+    const [language, setLanguage] = useState<Language>("java")
 
-    // Server Settings State
-    const [instanceType, setInstanceType] = useState("t2.micro")
-    const [region, setRegion] = useState("eu-west-2")
+    // server settings
+    type MemorySize = 128 | 512 | 1024 | 2048 | 4096 | 10240
+    const [memorySize, setMemorySize] = useState<MemorySize>(128)
+    type Region = "eu-west-2" | "us-east-1" | "eu-central-1"
+    const [region, setRegion] = useState<Region>("eu-west-2")
 
-    // View Toggle State
-    const [settingsView, setSettingsView] = useState("test") // "test" or "server"
+    // toggle test or server
+    type ViewToggle = "test" | "server"
+    const [settingsView, setSettingsView] = useState<ViewToggle>("test")
 
-    // Cost estimates per hour
-    const instanceCosts = {
-        "t2.micro": 0.0092,
-        "t2.small": 0.018,
-        "t2.medium": 0.037,
-        "m5.large": 0.076,
-        "c5.large": 0.067,
-        "r5.large": 0.099
+    // handlers
+    const handleNumArrayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        // only allow numbers and commas
+        setNumArray(e.target.value.replace(/[^0-9,]/g, ''))
     }
 
-    // Handlers
-    const handleNumsToSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setNumsToSearch(e.target.value)
+    const handleNumTargetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        // only allow numbers to be entered
+        if (!isNaN(Number(e.target.value))) {
+            setNumTarget(Number(e.target.value))
+        }        
     }
 
-    const handleNumsTargetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setNumTarget(e.target.value)
-    }
-
-    const handleSearchMethod = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setSearchMethod(e.target.value)
+    const handleAlgorithmChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setAlgorithm(e.target.value as Algorithm)
     }
 
     const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setLanguageType(e.target.value)
+        setLanguage(e.target.value as Language)
     }
 
-    const handleInstanceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setInstanceType(e.target.value)
+    const handleMemorySizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setMemorySize(Number(e.target.value) as MemorySize)
     }
 
     const handleRegionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setRegion(e.target.value)
+        setRegion(e.target.value as Region)
+    }
+
+    // code modal
+    const [modalOpen, setModalOpen] = useState(false);
+
+    // run testy
+    const runTest = async () => {
+        try {
+
+            if (numArray == null || numArray.length == 0) {
+                throw new Error("Array cannot be empty")
+            } 
+
+            const cleanedNumArray = numArray
+                .split(",")
+                .map(num => num.trim()) // remove whitspace
+                .filter(num => !isNaN(Number(num))) // remove non numbers
+                .filter(num => num != "") // remove empty ones
+                .join(",")
+            setNumArray(cleanedNumArray)
+
+            // data we gonna submit
+            const data = {
+                array: numArray,
+                target: numTarget,
+                algorithm: algorithm,
+                language: language,
+                memorySize: memorySize,
+                region: region
+            }
+
+            // submit
+            
+
+
+        } catch (error) {
+            alert(error)
+        }
     }
 
     return (
@@ -58,18 +96,18 @@ export default function Searching() {
 
             <div className="flex flex-col gap-12">
                 <div className="grid grid-cols-2 gap-8">
-                    {/* Left col */}
+                    {/* left col */}
                     <div className="flex flex-col gap-8">
-                        {/* Settings toggle */}
+                        {/* settings toggle */}
                         <div className="flex gap-4">
-                            {/* Testt settings */}
+                            {/* testt settings */}
                             <button
                                 onClick={() => setSettingsView("test")}
                                 className={`px-4 py-2 rounded ${settingsView === "test" ? "border border-pink-100" : "border-black"}`}
                             >
                                 Test Settings
                             </button>
-                            {/* Server settings */}
+                            {/* server settings */}
                             <button
                                 onClick={() => setSettingsView("server")}
                                 className={`px-4 py-2 rounded ${settingsView === "server" ? "border border-pink-100" : "border-black"}`}
@@ -78,15 +116,15 @@ export default function Searching() {
                             </button>
                         </div>
 
-                        {/* Test settings */}
+                        {/* test settings */}
                         {settingsView === "test" && (
                             <div className="flex flex-col gap-8">
                                 <div>
                                     <p>Numbers to search</p>
                                     <input
                                         type="text"
-                                        value={numsToSort}
-                                        onChange={handleNumsToSearchChange}
+                                        value={numArray}
+                                        onChange={handleNumArrayChange}
                                         className="w-full p-2 border rounded text-black"
                                     />
                                 </div>
@@ -95,15 +133,15 @@ export default function Searching() {
                                     <input
                                         type="text"
                                         value={numTarget}
-                                        onChange={handleNumsTargetChange}
+                                        onChange={handleNumTargetChange}
                                         className="w-full p-2 border rounded text-black"
                                     />
                                 </div>
                                 <div>
                                     <p>Search Method</p>
                                     <select
-                                        value={searchMethod}
-                                        onChange={handleSearchMethod}
+                                        value={algorithm}
+                                        onChange={handleAlgorithmChange}
                                         className="w-full p-2 border rounded text-black"
                                     >
                                         <option value="linear">Linear</option>
@@ -115,7 +153,7 @@ export default function Searching() {
                                 <div>
                                     <p>Language</p>
                                     <select
-                                        value={languageType}
+                                        value={language}
                                         onChange={handleLanguageChange}
                                         className="w-full p-2 border rounded text-black"
                                     >
@@ -128,22 +166,22 @@ export default function Searching() {
                             </div>
                         )}
 
-                        {/* Server settings */}
+                        {/* server settings */}
                         {settingsView === "server" && (
                             <div className="flex flex-col gap-8">
                                 <div>
-                                    <p>Instance Type</p>
+                                    <p>Memory Size (GB)</p>
                                     <select
-                                        value={instanceType}
-                                        onChange={handleInstanceChange}
+                                        value={memorySize}
+                                        onChange={handleMemorySizeChange}
                                         className="w-full p-2 border rounded text-black"
                                     >
-                                        <option value="t2.micro">t2.micro</option>
-                                        <option value="t2.small">t2.small</option>
-                                        <option value="t2.medium">t2.medium</option>
-                                        <option value="m5.large">m5.large (General Purpose)</option>
-                                        <option value="c5.large">c5.large (Compute Optimized)</option>
-                                        <option value="r5.large">r5.large (Memory Optimized)</option>
+                                        <option value={128}>0.1 GB (0.125 vCPU)</option>
+                                        <option value={512}>0.5 GB (0.5 vCPU)</option>
+                                        <option value={1024}>1 GB (1 vCPU)</option>
+                                        <option value={2048}>2 GB (2 vCPU)</option>
+                                        <option value={4096}>4 GB (4 vCPU)</option>
+                                        <option value={10240}>10 GB (6 vCPU)</option>
                                     </select>
                                 </div>
                                 <div>
@@ -162,55 +200,90 @@ export default function Searching() {
                         )}
                     </div>
 
-                    {/* Right col */}
-                    <div className="border border-white p-4 rounded-lg">
-                        <div className="grid grid-cols-2 gap-8">
-                            {/* Test settings */}
-                            <div>
-                                <h2 className="text-xl font-bold mb-4">Test Settings</h2>
-                                <div className="flex flex-col gap-4 text-white">
-                                    <div>
-                                        <p className="font-medium">Array to Search:</p>
-                                        <p>{numsToSort}</p>
+                    {/* right col */}
+                    <div className="border border-white p-4 rounded-lg h-fit">
+                        <div className="flex flex-col">
+                            <div className="grid grid-cols-2 gap-8">
+                                {/* test settings section */}
+                                <div>
+                                    <h2 className="text-xl font-bold mb-4">Test Settings</h2>
+                                    <div className="flex flex-col gap-4 text-white">
+                                        <div>
+                                            <p className="font-medium">Array to Search:</p>
+                                            <p>{numArray}</p>
+                                        </div>
+                                        <div>
+                                            <p className="font-medium">Target Number:</p>
+                                            <p>{numTarget}</p>
+                                        </div>
+                                        <div>
+                                            <p className="font-medium">Search Method:</p>
+                                            <p>{algorithm}</p>
+                                        </div>
+                                        <div>
+                                            <p className="font-medium">Language:</p>
+                                            <p>{language}</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="font-medium">Target Number:</p>
-                                        <p>{numTarget}</p>
-                                    </div>
-                                    <div>
-                                        <p className="font-medium">Search Method:</p>
-                                        <p>{searchMethod}</p>
-                                    </div>
-                                    <div>
-                                        <p className="font-medium">Language:</p>
-                                        <p>{languageType}</p>
+                                </div>
+
+                                {/* system settings */}
+                                <div>
+                                    <h2 className="text-xl font-bold mb-4">System Information</h2>
+                                    <div className="flex flex-col gap-4 text-white">
+                                        <div>
+                                            <p className="font-medium">Memory Size:</p>
+                                            <p>{memorySize} MB</p>
+                                        </div>
+                                        <div>
+                                            <p className="font-medium">vCPU:</p>
+                                            <p>{memorySize >= 10240 ? "6" : (memorySize / 1024).toFixed(3)} vCPU</p>
+                                        </div>
+                                        <div>
+                                            <p className="font-medium">Cost per GB-second:</p>
+                                            <p>£-</p>
+                                        </div>
+                                        <div>
+                                            <p className="font-medium">Region:</p>
+                                            <p>{region}</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* System info */}
-                            <div>
-                                <h2 className="text-xl font-bold mb-4">System Information</h2>
-                                <div className="flex flex-col gap-4 text-white">
-                                    <div>
-                                        <p className="font-medium">Instance Type:</p>
-                                        <p>{instanceType}</p>
-                                    </div>
-                                    <div>
-                                        <p className="font-medium">Cost per Hour:</p>
-                                        <p>£{instanceCosts[instanceType]}/hr</p>
-                                    </div>
-                                    <div>
-                                        <p className="font-medium">Region:</p>
-                                        <p>{region}</p>
-                                    </div>
-                                </div>
+                            <div className="flex flex-row gap-4 py-16 pb-0">
+                                {/* run testy */}
+                                <button
+                                    onClick={() => runTest()}
+                                    className="bg-white-400 border border-pink-600 hover:bg-pink-600 text-white px-4 py-2 rounded-md"
+                                >
+                                    Run Test
+                                </button>
+
+                                {/* display code imply */}
+                                <button
+                                    onClick={() => setModalOpen(true)}
+                                    className="bg-white-400 border border-pink-600 hover:bg-pink-600 text-white px-4 py-2 rounded-md"
+                                >
+                                    View Implementation
+                                </button>
+                                <CodeModal
+                                    isOpen={modalOpen}
+                                    onClose={() => setModalOpen(false)}
+                                    title={
+                                        language.charAt(0).toUpperCase() + language.slice(1)
+                                        + " - "
+                                        + algorithm.charAt(0).toUpperCase() + algorithm.slice(1)
+                                        + " search"
+                                    }
+                                    codeContent={searchImplementations[algorithm][language]}
+                                />
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Results */}
+                {/* results */}
                 <div className="border border-white p-4 rounded-lg">
                     <h2 className="text-xl font-bold mb-4">Results</h2>
                     <div className="grid grid-cols-4 gap-4 text-white">
@@ -224,7 +297,7 @@ export default function Searching() {
                         </div>
                         <div>
                             <p className="font-medium">Estimated Cost:</p>
-                            <p>£{(instanceCosts[instanceType] * (0.0023 / 3600)).toFixed(8)}</p>
+                            <p>£-</p>
                         </div>
                         <div>
                             <p className="font-medium">Status:</p>
@@ -233,7 +306,7 @@ export default function Searching() {
                     </div>
                 </div>
 
-                {/* Past tests */}
+                {/* past tests */}
                 <div className="border border-white p-4 rounded-lg">
                     <h2 className="text-xl font-bold mb-4">Past Test Runs</h2>
                     <div className="flex flex-col gap-4 text-white">
@@ -241,7 +314,7 @@ export default function Searching() {
                             <p>Timestamp</p>
                             <p>Search Method</p>
                             <p>Language</p>
-                            <p>Instance</p>
+                            <p>Memory</p>
                             <p>Time Taken</p>
                             <p>Cost</p>
                             <p>Status</p>
@@ -250,9 +323,9 @@ export default function Searching() {
                             <p>2024-12-29 14:30</p>
                             <p>Binary</p>
                             <p>Python</p>
-                            <p>t2.micro</p>
+                            <p>128 MB</p>
                             <p>0.0021s</p>
-                            <p>£0.00000007</p>
+                            <p>£0.00000001</p>
                             <p className="text-green-500">Success</p>
                         </div>
                         <div className="grid grid-cols-7 gap-4">
