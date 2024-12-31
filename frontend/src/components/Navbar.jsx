@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export default function Navbar() {
   return (
-    <nav className="w-full p-4 flex flex-row gap-8 max-w-7xl mx-auto border-b border-l border-r border-pink-500 rounded-md ">
+    <nav className="w-full p-4 flex flex-row gap-8 max-w-7xl mx-auto rounded-md ">
       <Link href="/">Home</Link>
       <Link href="/algo-benchmarks">Algorithm Benchmarks</Link>
       <Link href="/distributed-computing">Distributed Computing</Link>

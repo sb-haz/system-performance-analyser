@@ -6,9 +6,11 @@ import com.systemperformanceanalyser.orchestrator_service.algo_benchmarks.search
 import com.systemperformanceanalyser.orchestrator_service.algo_benchmarks.searching.model.enums.Region;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @AllArgsConstructor
+@NoArgsConstructor
 @Getter
 @Setter
 public class SearchRequest {

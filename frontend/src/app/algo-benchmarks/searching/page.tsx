@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import CodeModal from '@/components/ui/CodeModal'
 import { searchImplementations } from './searchImplementations'
+import prettyMs from 'pretty-ms'
+import { X, History, Clock, Database, BarChart, LineChart, ListFilter, Archive } from 'lucide-react'
 
 export default function Searching() {
     // test settings
@@ -23,6 +25,25 @@ export default function Searching() {
     type ViewToggle = "test" | "server"
     const [settingsView, setSettingsView] = useState<ViewToggle>("test")
 
+    // code modal
+    const [modalOpen, setModalOpen] = useState(false);
+
+    // result
+    type Status = "SUCCESS" | "FAILED" | "PENDING"
+    type Result = {
+        timestamp: string // formatted string for displayin
+        timestampRaw: number // unix timestamp (ms) for calc
+        algorithm: Algorithm
+        language: Language
+        memory: MemorySize
+        timeTaken: number
+        memoryUsage: number
+        cpuUsage: number
+        cost: number
+        status: Status
+    }
+    const [testHistory, setTestHistory] = useState<Result[]>([])
+
     // handlers
     const handleNumArrayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         // only allow numbers and commas
@@ -33,7 +54,7 @@ export default function Searching() {
         // only allow numbers to be entered
         if (!isNaN(Number(e.target.value))) {
             setNumTarget(Number(e.target.value))
-        }        
+        }
     }
 
     const handleAlgorithmChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -52,16 +73,34 @@ export default function Searching() {
         setRegion(e.target.value as Region)
     }
 
-    // code modal
-    const [modalOpen, setModalOpen] = useState(false);
+
 
     // run testy
+    const [isTestRunning, setIsTestRunning] = useState(false)
     const runTest = async () => {
         try {
+            // stop them running multiple tests at once
+            // causes issue with not replacing pending test
+            // at end of list
+            setIsTestRunning(true)
+
+            // add pending result to end of array
+            setTestHistory(prevTests => [...prevTests, {
+                timestamp: 'Just now',
+                timestampRaw: Date.now(),
+                algorithm: algorithm,
+                language: language,
+                memory: memorySize,
+                timeTaken: 0,
+                memoryUsage: 0,
+                cpuUsage: 0,
+                cost: 0,
+                status: "PENDING"
+            }])
 
             if (numArray == null || numArray.length == 0) {
                 throw new Error("Array cannot be empty")
-            } 
+            }
 
             const cleanedNumArray = numArray
                 .split(",")
@@ -81,12 +120,35 @@ export default function Searching() {
                 region: region
             }
 
-            // submit
-            
+            // initial request
+            const response = await fetch("http://localhost:8080/api/algo-benchmarks/search/execute", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+
+            // request error
+            if (!response.ok) {
+                throw new Error("Network response error")
+            }
+
+            // parse response 
+            const responseData = await response.json()
+
+            // replace pending one at end of array
+            setTestHistory(currentTestHistory => {
+                const testHistoryNew = [...currentTestHistory] // copy current one
+                testHistoryNew[testHistoryNew.length - 1] = responseData // replace last (pending) test
+                return testHistoryNew
+            })
 
 
         } catch (error) {
             alert(error)
+        } finally {
+            setIsTestRunning(false)
         }
     }
 
@@ -94,7 +156,7 @@ export default function Searching() {
         <div>
             <h1 className="text-3xl mb-8">Algorithm Benchmarks {">"} Searching</h1>
 
-            <div className="flex flex-col gap-12">
+            <div className="flex flex-col gap-4">
                 <div className="grid grid-cols-2 gap-8">
                     {/* left col */}
                     <div className="flex flex-col gap-8">
@@ -233,7 +295,7 @@ export default function Searching() {
                                     <div className="flex flex-col gap-4 text-white">
                                         <div>
                                             <p className="font-medium">Memory Size:</p>
-                                            <p>{memorySize} MB</p>
+                                            <p>{memorySize} mb</p>
                                         </div>
                                         <div>
                                             <p className="font-medium">vCPU:</p>
@@ -241,7 +303,7 @@ export default function Searching() {
                                         </div>
                                         <div>
                                             <p className="font-medium">Cost per GB-second:</p>
-                                            <p>£-</p>
+                                            <p>£0.00</p>
                                         </div>
                                         <div>
                                             <p className="font-medium">Region:</p>
@@ -251,21 +313,13 @@ export default function Searching() {
                                 </div>
                             </div>
 
-                            <div className="flex flex-row gap-4 py-16 pb-0">
-                                {/* run testy */}
-                                <button
-                                    onClick={() => runTest()}
-                                    className="bg-white-400 border border-pink-600 hover:bg-pink-600 text-white px-4 py-2 rounded-md"
-                                >
-                                    Run Test
-                                </button>
-
+                            <div className="flex flex-row justify-start gap-4 py-16 pb-0">
                                 {/* display code imply */}
                                 <button
                                     onClick={() => setModalOpen(true)}
                                     className="bg-white-400 border border-pink-600 hover:bg-pink-600 text-white px-4 py-2 rounded-md"
                                 >
-                                    View Implementation
+                                    View Code
                                 </button>
                                 <CodeModal
                                     isOpen={modalOpen}
@@ -278,75 +332,84 @@ export default function Searching() {
                                     }
                                     codeContent={searchImplementations[algorithm][language]}
                                 />
+                                {/* run testy */}
+                                <button
+                                    onClick={runTest}
+                                    disabled={isTestRunning}
+                                    className="bg-white-400 bg-pink-600 hover:bg-pink-600 text-white px-4 py-2 rounded-md"
+                                >
+                                    {isTestRunning ? "Running Test..." : "Run Test"}
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* results */}
-                <div className="border border-white p-4 rounded-lg">
-                    <h2 className="text-xl font-bold mb-4">Results</h2>
-                    <div className="grid grid-cols-4 gap-4 text-white">
-                        <div>
-                            <p className="font-medium">Time Taken:</p>
-                            <p>0.0023s</p>
-                        </div>
-                        <div>
-                            <p className="font-medium">Memory Usage:</p>
-                            <p>2.3 MB</p>
-                        </div>
-                        <div>
-                            <p className="font-medium">Estimated Cost:</p>
-                            <p>£-</p>
-                        </div>
-                        <div>
-                            <p className="font-medium">Status:</p>
-                            <p className="text-green-500">Success</p>
-                        </div>
+                <div className="border border-white p-4 mt-6 rounded-lg">
+                    <div className="flex justify-between pb-4">
+                        <h2 className="text-xl font-bold">Results</h2>
                     </div>
-                </div>
-
-                {/* past tests */}
-                <div className="border border-white p-4 rounded-lg">
-                    <h2 className="text-xl font-bold mb-4">Past Test Runs</h2>
                     <div className="flex flex-col gap-4 text-white">
-                        <div className="grid grid-cols-7 gap-4 border-b border-gray-700 pb-2">
+                        <div className="grid grid-cols-9 gap-4 border-b border-gray-700 pb-2">
                             <p>Timestamp</p>
-                            <p>Search Method</p>
+                            <p>Algorithm</p>
                             <p>Language</p>
                             <p>Memory</p>
                             <p>Time Taken</p>
+                            <p>Memory Usage</p>
+                            <p>CPU Usage</p>
                             <p>Cost</p>
                             <p>Status</p>
                         </div>
-                        <div className="grid grid-cols-7 gap-4">
-                            <p>2024-12-29 14:30</p>
-                            <p>Binary</p>
-                            <p>Python</p>
-                            <p>128 MB</p>
-                            <p>0.0021s</p>
-                            <p>£0.00000001</p>
-                            <p className="text-green-500">Success</p>
-                        </div>
-                        <div className="grid grid-cols-7 gap-4">
-                            <p>2024-12-29 14:25</p>
-                            <p>Linear</p>
-                            <p>Java</p>
-                            <p>t2.small</p>
-                            <p>0.0034s</p>
-                            <p>£0.00000021</p>
-                            <p className="text-green-500">Success</p>
-                        </div>
-                        <div className="grid grid-cols-7 gap-4">
-                            <p>2024-12-29 14:20</p>
-                            <p>Jump</p>
-                            <p>JavaScript</p>
-                            <p>t2.medium</p>
-                            <p>0.0028s</p>
-                            <p>£0.00000036</p>
-                            <p className="text-red-500">Failed</p>
-                        </div>
+                        {testHistory.length > 0 ? (
+                            <div>
+                                {testHistory.toReversed().map(result => (
+                                    <div
+                                        key={result.timestampRaw}
+                                        className="grid grid-cols-9 gap-4">
+                                        <p>
+                                            {result.status === 'PENDING'
+                                                ? 'Just now'
+                                                : prettyMs(Date.now() - result.timestampRaw, { secondsDecimalDigits: 1 }) + ' ago'
+                                            }
+                                        </p>
+                                        <p>{result.algorithm.toLowerCase()}</p>
+                                        <p>{result.language.toLowerCase()}</p>
+                                        <p>{result.memory} MB</p>
+                                        <p>{result.timeTaken}s</p>
+                                        <p>{result.memoryUsage} MB</p>
+                                        <p>{result.cpuUsage}%</p>
+                                        <p>£{result.cost.toFixed(8)}</p>
+                                        <p className={
+                                            result.status === 'SUCCESS' ? 'text-green-500' :
+                                                result.status === 'FAILED' ? 'text-red-500' :
+                                                    'text-amber-500'
+                                        }>
+                                            {result.status.toLowerCase()}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-gray-500 text-center ">No test results yet.</p>
+                        )}
                     </div>
+                </div>
+                <div className="flex justify-end gap-4">
+                    {testHistory.length > 0 && (
+                        <button
+                            onClick={() => setTestHistory([])}
+                            className="bg-white-400 border border-gray-400 hover:bg-pink-600 text-white px-4 py-2 rounded-md flex items-center gap-2"
+                        >
+                            Clear Results <X size={18} />
+                        </button>
+                    )}
+                    <button
+                        className="bg-white-400 border border-gray-400 hover:bg-pink-600 text-white px-4 py-2 rounded-md flex items-center gap-2"
+                    >
+                        Historical Tests <LineChart size={18} />
+                    </button>
                 </div>
             </div>
         </div>

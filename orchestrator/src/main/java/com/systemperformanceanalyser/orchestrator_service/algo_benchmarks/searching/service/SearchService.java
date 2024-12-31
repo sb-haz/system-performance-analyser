@@ -4,16 +4,36 @@ import com.systemperformanceanalyser.orchestrator_service.algo_benchmarks.search
 import com.systemperformanceanalyser.orchestrator_service.algo_benchmarks.searching.model.enums.AlgorithmType;
 import com.systemperformanceanalyser.orchestrator_service.algo_benchmarks.searching.model.SearchRequest;
 import com.systemperformanceanalyser.orchestrator_service.algo_benchmarks.searching.model.SearchResult;
+import com.systemperformanceanalyser.orchestrator_service.algo_benchmarks.searching.model.enums.Status;
+import org.springframework.stereotype.Service;
 
+import java.util.Date;
+import java.util.Random;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Service
 public class SearchService {
     private static final String NUMBERS_AND_COMMAS_ONLY_REGEX = "^[1-9](,[1-9])*$";
 
-    public SearchResult orchestrateSearch(SearchRequest request) {
-        validateSearchRequest(request);
-        return null;
+    public SearchResult orchestrateSearch(SearchRequest request) throws InterruptedException {
+//        validateSearchRequest(request);
+
+        SearchResult result = new SearchResult();
+        Random random = new Random();
+
+        result.setTimestamp(new Date().toString());
+        result.setTimestampRaw(System.currentTimeMillis());
+        result.setAlgorithm(String.valueOf(request.getAlgorithm()));
+        result.setLanguage(String.valueOf(request.getLanguage()));
+        result.setMemory(request.getMemorySize().getValue());
+        result.setTimeTaken(Double.parseDouble(String.format("%.4f", random.nextDouble(0.0001, 0.01))));
+        result.setMemoryUsage(Double.parseDouble(String.format("%.2f", random.nextDouble(1.5, 3))));
+        result.setCpuUsage(Double.parseDouble(String.format("%.1f", random.nextDouble(7, 25))));
+        result.setCost(Double.parseDouble(String.format("%.8f", random.nextDouble(0.00000001, 0.000001))));
+        result.setStatus(Status.SUCCESS);
+        return result;
     }
 
     private void validateSearchRequest(SearchRequest request) {
@@ -22,9 +42,9 @@ public class SearchService {
             throw new SearchAlgorithmValidationError();
         if (request.getTarget() == null || request.getTarget().length() == 0)
             throw new SearchAlgorithmValidationError();
-        if (request.getAlgorithm() == null ||  request.getAlgorithm().toString().length() == 0)
+        if (request.getAlgorithm() == null || request.getAlgorithm().toString().length() == 0)
             throw new SearchAlgorithmValidationError();
-        if (request.getLanguage() == null ||  request.getLanguage().toString().length() == 0)
+        if (request.getLanguage() == null || request.getLanguage().toString().length() == 0)
             throw new SearchAlgorithmValidationError();
 
         int target = Integer.parseInt(request.getTarget());
@@ -43,7 +63,7 @@ public class SearchService {
         // if numbers are valid after removing numbers
         // might not need this thanks to above regex
         String[] charArray = request.getArray().split(",");
-        for (int i=0; i<charArray.length; i++) {
+        for (int i = 0; i < charArray.length; i++) {
             try {
                 Integer.parseInt(charArray[i]);
             } catch (NumberFormatException e) {
@@ -53,9 +73,9 @@ public class SearchService {
 
         // if numbers are sorted
         int[] intArray = new int[charArray.length];
-        for (int i=0; i<charArray.length; i++) {
+        for (int i = 0; i < charArray.length; i++) {
             intArray[i] = Integer.parseInt(charArray[i]);
-            if (i != 0 && intArray[i] < intArray[i-1]) {
+            if (i != 0 && intArray[i] < intArray[i - 1]) {
                 throw new SearchAlgorithmValidationError();
             }
         }
@@ -94,7 +114,7 @@ public class SearchService {
         // 5. validate instance type info (type, region etc)
     }
 
-    private void setupComputeInstance()  {
+    private void setupComputeInstance() {
         // prepares execution environment
     }
 
