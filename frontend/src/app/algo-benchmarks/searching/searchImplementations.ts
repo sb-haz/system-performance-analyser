@@ -7,9 +7,9 @@ interface CodeImplementations {
 export const searchImplementations: CodeImplementations = {
 
     // LINEAR SEARCH
-    'linear': {
+    'LINEAR': {
 
-        java: `public static int JavaLinearSearch(int[] nums, int target) {
+        JAVA: `public static int JavaLinearSearch(int[] nums, int target) {
     for (int i = 0; i < nums.length; i++) {
         if (nums[i] == target) {
             return i;
@@ -18,13 +18,13 @@ export const searchImplementations: CodeImplementations = {
     return -1;
  }`,
 
-        python: `def PythonLinearSearch(nums, target):
+        PYTHON: `def PythonLinearSearch(nums, target):
     for i in range(len(nums)):
         if nums[i] == target:
             return i
     return -1`,
 
-        javascript: `function JavaScriptLinearSearch(nums, target) {
+        JAVASCRIPT: `function JavaScriptLinearSearch(nums, target) {
     for (let i = 0; i < nums.length; i++) {
         if (nums[i] === target) {
             return i;
@@ -33,7 +33,7 @@ export const searchImplementations: CodeImplementations = {
     return -1;
  }`,
 
-        csharp: `public static int DotNetLinearSearch(int[] nums, int target) {
+        CSHARP: `public static int DotNetLinearSearch(int[] nums, int target) {
     for (int i = 0; i < nums.Length; i++) {
         if (nums[i] == target) {
             return i;
@@ -44,9 +44,9 @@ export const searchImplementations: CodeImplementations = {
     },
 
     // BINARY SEARCH
-    'binary': {
+    'BINARY': {
 
-        java: `public static int JavaBinarySearch(int[] nums, int target) {
+        JAVA: `public static int JavaBinarySearch(int[] nums, int target) {
     int left = 0;
     int right = nums.length - 1;
     
@@ -65,7 +65,7 @@ export const searchImplementations: CodeImplementations = {
     return -1;
  }`,
 
-        python: `def PythonBinarySearch(nums, target):
+        PYTHON: `def PythonBinarySearch(nums, target):
     left = 0
     right = len(nums) - 1
     
@@ -80,7 +80,7 @@ export const searchImplementations: CodeImplementations = {
             right = mid - 1
     return -1`,
 
-        javascript: `function JavaScriptBinarySearch(nums, target) {
+        JAVASCRIPT: `function JavaScriptBinarySearch(nums, target) {
     let left = 0;
     let right = nums.length - 1;
     
@@ -99,7 +99,7 @@ export const searchImplementations: CodeImplementations = {
     return -1;
  }`,
 
-        csharp: `public static int DotNetBinarySearch(int[] nums, int target) {
+        CSHARP: `public static int DotNetBinarySearch(int[] nums, int target) {
     int left = 0;
     int right = nums.Length - 1;
     
@@ -120,9 +120,9 @@ export const searchImplementations: CodeImplementations = {
     },
 
     // JUMP SEARCH
-    'jump': {
+    'JUMP': {
 
-        java: `public static int JavaJumpSearch(int[] nums, int target) {
+        JAVA: `public static int JavaJumpSearch(int[] nums, int target) {
     int n = nums.length;
     int step = (int) Math.floor(Math.sqrt(n));
     
@@ -142,7 +142,7 @@ export const searchImplementations: CodeImplementations = {
     return -1;
  }`,
 
-        python: `def PythonJumpSearch(nums, target):
+        PYTHON: `def PythonJumpSearch(nums, target):
     n = len(nums)
     step = int(n ** 0.5)
     
@@ -162,7 +162,7 @@ export const searchImplementations: CodeImplementations = {
         return prev
     return -1`,
 
-        javascript: `function JavaScriptJumpSearch(nums, target) {
+        JAVASCRIPT: `function JavaScriptJumpSearch(nums, target) {
     const n = nums.length;
     const step = Math.floor(Math.sqrt(n));
     
@@ -182,7 +182,7 @@ export const searchImplementations: CodeImplementations = {
     return -1;
  }`,
 
-        csharp: `public static int DotNetJumpSearch(int[] nums, int target) {
+        CSHARP: `public static int DotNetJumpSearch(int[] nums, int target) {
     int n = nums.Length;
     int step = (int)Math.Floor(Math.Sqrt(n));
     
@@ -204,9 +204,9 @@ export const searchImplementations: CodeImplementations = {
     },
 
     // INTERPOLATION SEARCH
-    'interpolation': {
+    'INTERPOLATION': {
 
-        java: `public static int JavaInterpolationSearch(int[] nums, int target) {
+        JAVA: `public static int JavaInterpolationSearch(int[] nums, int target) {
     int low = 0;
     int high = nums.length - 1;
     
@@ -226,7 +226,7 @@ export const searchImplementations: CodeImplementations = {
     return -1;
  }`,
 
-        python: `def PythonInterpolationSearch(nums, target):
+        PYTHON: `def PythonInterpolationSearch(nums, target):
     low = 0
     high = len(nums) - 1
     
@@ -247,7 +247,7 @@ export const searchImplementations: CodeImplementations = {
             high = pos - 1
     return -1`,
 
-        javascript: `function JavaScriptInterpolationSearch(nums, target) {
+        JAVASCRIPT: `function JavaScriptInterpolationSearch(nums, target) {
     let low = 0;
     let high = nums.length - 1;
     
@@ -267,7 +267,7 @@ export const searchImplementations: CodeImplementations = {
     return -1;
  }`,
 
-        csharp: `public static int DotNetInterpolationSearch(int[] nums, int target) {
+        CSHARP: `public static int DotNetInterpolationSearch(int[] nums, int target) {
     int low = 0;
     int high = nums.Length - 1;
     

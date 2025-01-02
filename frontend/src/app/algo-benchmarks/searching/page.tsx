@@ -2,45 +2,59 @@
 
 import { useState } from 'react'
 import CodeModal from '@/components/ui/CodeModal'
+import GenerateModal from '@/components/ui/GenerateModal'
 import { searchImplementations } from './searchImplementations'
 import prettyMs from 'pretty-ms'
 import { X, History, Clock, Database, BarChart, LineChart, ListFilter, Archive } from 'lucide-react'
 
 export default function Searching() {
     // test settings
-    const [numArray, setNumArray] = useState("1,2,3,4,5,6,7,8,9,10")
-    const [numTarget, setNumTarget] = useState<number>(1)
-    type Algorithm = "linear" | "binary" | "jump" | "interpolation"
-    const [algorithm, setAlgorithm] = useState<Algorithm>("linear")
-    type Language = "java" | "python" | "javascript" | "csharp"
-    const [language, setLanguage] = useState<Language>("java")
+    const [numArray, setNumArray] = useState("1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100")
+    const [numTarget, setNumTarget] = useState<number>(25)
+    type Algorithm = "LINEAR" | "BINARY" | "JUMP" | "INTERPOLATION"
+    const [algorithm, setAlgorithm] = useState<Algorithm>("LINEAR")
+    type Language = "JAVA" | "PYTHON" | "JAVASCRIPT" | "CSHARP"
+    const [language, setLanguage] = useState<Language>("JAVA")
 
     // server settings
-    type MemorySize = 128 | 512 | 1024 | 2048 | 4096 | 10240
-    const [memorySize, setMemorySize] = useState<MemorySize>(128)
-    type Region = "eu-west-2" | "us-east-1" | "eu-central-1"
-    const [region, setRegion] = useState<Region>("eu-west-2")
+    type MemorySize = "MB_128" | "MB_256" | "MB_512" | "MB_1024" | "MB_2048"
+    const [memorySize, setMemorySize] = useState<MemorySize>("MB_128")
+    type Region = "EU_WEST_2" | "US_EAST_1" | "EU_CENTRAL_1"
+    const [region, setRegion] = useState<Region>("EU_WEST_2")
 
     // toggle test or server
-    type ViewToggle = "test" | "server"
-    const [settingsView, setSettingsView] = useState<ViewToggle>("test")
+    type ViewToggle = "TEST" | "SERVER"
+    const [settingsView, setSettingsView] = useState<ViewToggle>("TEST")
 
     // code modal
-    const [modalOpen, setModalOpen] = useState(false);
+    const [codeModalOpen, setCodeModalOpen] = useState(false);
+
+    // generate modal
+    const [generateModalOpen, setGenerateModalOpen] = useState(false);
 
     // result
-    type Status = "SUCCESS" | "FAILED" | "PENDING"
+    type ExecutionStatus = "SUCCESS" | "FAILED" | "PENDING"
+    type SearchStatus = "FOUND" | "NOT_FOUND"
     type Result = {
         timestamp: string // formatted string for displayin
         timestampRaw: number // unix timestamp (ms) for calc
+
+        array: String,
+        target: number,
+
         algorithm: Algorithm
         language: Language
-        memory: MemorySize
+        memorySize: MemorySize
+        region: Region,
+
+        iterations: number,
+        comparisons: number,
         timeTaken: number
-        memoryUsage: number
-        cpuUsage: number
         cost: number
-        status: Status
+
+        executionStatus: ExecutionStatus,
+        searchStatus: SearchStatus,
+        foundIndex: number
     }
     const [testHistory, setTestHistory] = useState<Result[]>([])
 
@@ -66,7 +80,7 @@ export default function Searching() {
     }
 
     const handleMemorySizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setMemorySize(Number(e.target.value) as MemorySize)
+        setMemorySize((e.target.value) as MemorySize)
     }
 
     const handleRegionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -88,14 +102,19 @@ export default function Searching() {
             setTestHistory(prevTests => [...prevTests, {
                 timestamp: 'Just now',
                 timestampRaw: Date.now(),
+                array: numArray,
+                target: numTarget,
                 algorithm: algorithm,
                 language: language,
-                memory: memorySize,
+                memorySize: memorySize,
+                region: region,
+                iterations: 0,
+                comparisons: 0,
                 timeTaken: 0,
-                memoryUsage: 0,
-                cpuUsage: 0,
                 cost: 0,
-                status: "PENDING"
+                executionStatus: "PENDING",
+                searchStatus: "NOT_FOUND",
+                foundIndex: -1
             }])
 
             if (numArray == null || numArray.length == 0) {
@@ -121,7 +140,7 @@ export default function Searching() {
             }
 
             // initial request
-            const response = await fetch("http://localhost:8080/api/algo-benchmarks/search/execute", {
+            const response = await fetch("http://localhost:8080/api/v1/algos/search", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -136,6 +155,7 @@ export default function Searching() {
 
             // parse response 
             const responseData = await response.json()
+            console.log(responseData)
 
             // replace pending one at end of array
             setTestHistory(currentTestHistory => {
@@ -164,31 +184,44 @@ export default function Searching() {
                         <div className="flex gap-4">
                             {/* testt settings */}
                             <button
-                                onClick={() => setSettingsView("test")}
-                                className={`px-4 py-2 rounded ${settingsView === "test" ? "border border-pink-100" : "border-black"}`}
+                                onClick={() => setSettingsView("TEST")}
+                                className={`px-4 py-2 rounded ${settingsView === "TEST" ? "border border-pink-100" : "border-black"}`}
                             >
                                 Test Settings
                             </button>
                             {/* server settings */}
                             <button
-                                onClick={() => setSettingsView("server")}
-                                className={`px-4 py-2 rounded ${settingsView === "server" ? "border border-pink-100" : "border-black"}`}
+                                onClick={() => setSettingsView("SERVER")}
+                                className={`px-4 py-2 rounded ${settingsView === "SERVER" ? "border border-pink-100" : "border-black"}`}
                             >
                                 Server Settings
                             </button>
                         </div>
 
                         {/* test settings */}
-                        {settingsView === "test" && (
+                        {settingsView === "TEST" && (
                             <div className="flex flex-col gap-8">
                                 <div>
                                     <p>Numbers to search</p>
-                                    <input
-                                        type="text"
-                                        value={numArray}
-                                        onChange={handleNumArrayChange}
-                                        className="w-full p-2 border rounded text-black"
-                                    />
+                                    <div className="flex flex-row gap-2">
+                                        <input
+                                            type="text"
+                                            value={numArray}
+                                            onChange={handleNumArrayChange}
+                                            className="w-full p-2 border rounded text-black"
+                                        />
+                                        <button
+                                            onClick={() => setGenerateModalOpen(true)}
+                                            className="bg-white-400 border border-pink-600 hover:bg-pink-600 text-white px-4 py-2 rounded-md"
+                                        >
+                                            Generate
+                                        </button>
+                                        <GenerateModal
+                                            isOpen={generateModalOpen}
+                                            runOnClose={() => setGenerateModalOpen(false)}
+                                            setNumArray={setNumArray}
+                                        />
+                                    </div>
                                 </div>
                                 <div>
                                     <p>Target</p>
@@ -206,10 +239,10 @@ export default function Searching() {
                                         onChange={handleAlgorithmChange}
                                         className="w-full p-2 border rounded text-black"
                                     >
-                                        <option value="linear">Linear</option>
-                                        <option value="binary">Binary</option>
-                                        <option value="jump">Jump</option>
-                                        <option value="interpolation">Interpolation</option>
+                                        <option value="LINEAR">Linear</option>
+                                        <option value="BINARY">Binary</option>
+                                        <option value="JUMP">Jump</option>
+                                        <option value="INTERPOLATION">Interpolation</option>
                                     </select>
                                 </div>
                                 <div>
@@ -219,17 +252,17 @@ export default function Searching() {
                                         onChange={handleLanguageChange}
                                         className="w-full p-2 border rounded text-black"
                                     >
-                                        <option value="java">Java</option>
-                                        <option value="python">Python</option>
-                                        <option value="javascript">JavaScript</option>
-                                        <option value="csharp">C#</option>
+                                        <option value="JAVA">Java</option>
+                                        <option value="PYTHON">Python</option>
+                                        <option value="JAVASCRIPT">JavaScript</option>
+                                        <option value="CSHARP">C#</option>
                                     </select>
                                 </div>
                             </div>
                         )}
 
                         {/* server settings */}
-                        {settingsView === "server" && (
+                        {settingsView === "SERVER" && (
                             <div className="flex flex-col gap-8">
                                 <div>
                                     <p>Memory Size (GB)</p>
@@ -238,12 +271,11 @@ export default function Searching() {
                                         onChange={handleMemorySizeChange}
                                         className="w-full p-2 border rounded text-black"
                                     >
-                                        <option value={128}>0.1 GB (0.125 vCPU)</option>
-                                        <option value={512}>0.5 GB (0.5 vCPU)</option>
-                                        <option value={1024}>1 GB (1 vCPU)</option>
-                                        <option value={2048}>2 GB (2 vCPU)</option>
-                                        <option value={4096}>4 GB (4 vCPU)</option>
-                                        <option value={10240}>10 GB (6 vCPU)</option>
+                                        <option value="MB_128">128 MB (0.07 vCPU)</option>
+                                        <option value="MB_256">256 MB (0.15 vCPU)</option>
+                                        <option value="MB_512">512 MB (0.30 vCPU)</option>
+                                        <option value="MB_1024">1024 MB (0.50 vCPU)</option>
+                                        <option value="MB_2048">2048 MB (1.00 vCPU)</option>
                                     </select>
                                 </div>
                                 <div>
@@ -253,9 +285,9 @@ export default function Searching() {
                                         onChange={handleRegionChange}
                                         className="w-full p-2 border rounded text-black"
                                     >
-                                        <option value="eu-west-2">London (eu-west-2)</option>
-                                        <option value="us-east-1" disabled>N. Virginia (us-east-1)</option>
-                                        <option value="eu-central-1" disabled>Frankfurt (eu-central-1)</option>
+                                        <option value="EU_WEST_2">London (eu-west-2)</option>
+                                        <option value="US_EAST_1" disabled>N. Virginia (us-east-1)</option>
+                                        <option value="EU_CENTRAL_1" disabled>Frankfurt (eu-central-1)</option>
                                     </select>
                                 </div>
                             </div>
@@ -272,7 +304,10 @@ export default function Searching() {
                                     <div className="flex flex-col gap-4 text-white">
                                         <div>
                                             <p className="font-medium">Array to Search:</p>
-                                            <p>{numArray}</p>
+                                            <p>{numArray.length > 25
+                                                ? numArray.substring(0, 15) + " ..." + numArray.substring(numArray.length - 10, numArray.length)
+                                                : numArray}
+                                            </p>
                                         </div>
                                         <div>
                                             <p className="font-medium">Target Number:</p>
@@ -280,11 +315,11 @@ export default function Searching() {
                                         </div>
                                         <div>
                                             <p className="font-medium">Search Method:</p>
-                                            <p>{algorithm}</p>
+                                            <p>{algorithm.toLowerCase()}</p>
                                         </div>
                                         <div>
                                             <p className="font-medium">Language:</p>
-                                            <p>{language}</p>
+                                            <p>{language.toLowerCase()}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -295,19 +330,19 @@ export default function Searching() {
                                     <div className="flex flex-col gap-4 text-white">
                                         <div>
                                             <p className="font-medium">Memory Size:</p>
-                                            <p>{memorySize} mb</p>
+                                            <p>{memorySize.replace("MB_", "")} mb</p>
                                         </div>
                                         <div>
                                             <p className="font-medium">vCPU:</p>
-                                            <p>{memorySize >= 10240 ? "6" : (memorySize / 1024).toFixed(3)} vCPU</p>
+                                            {(parseInt(memorySize.replace("MB_", "")) / 1792).toFixed(3)} vCPU
                                         </div>
                                         <div>
-                                            <p className="font-medium">Cost per GB-second:</p>
-                                            <p>£0.00</p>
+                                            <p className="font-medium">Cost per request:</p>
+                                            <p>£0.00000000</p>
                                         </div>
                                         <div>
                                             <p className="font-medium">Region:</p>
-                                            <p>{region}</p>
+                                            <p>{region.toLowerCase()}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -316,19 +351,19 @@ export default function Searching() {
                             <div className="flex flex-row justify-start gap-4 py-16 pb-0">
                                 {/* display code imply */}
                                 <button
-                                    onClick={() => setModalOpen(true)}
+                                    onClick={() => setCodeModalOpen(true)}
                                     className="bg-white-400 border border-pink-600 hover:bg-pink-600 text-white px-4 py-2 rounded-md"
                                 >
                                     View Code
                                 </button>
                                 <CodeModal
-                                    isOpen={modalOpen}
-                                    onClose={() => setModalOpen(false)}
+                                    isOpen={codeModalOpen}
+                                    onClose={() => setCodeModalOpen(false)}
                                     title={
-                                        language.charAt(0).toUpperCase() + language.slice(1)
+                                        language.charAt(0).toUpperCase() + language.slice(1).toLowerCase()
                                         + " - "
-                                        + algorithm.charAt(0).toUpperCase() + algorithm.slice(1)
-                                        + " search"
+                                        + algorithm.charAt(0).toUpperCase() + algorithm.slice(1).toLowerCase()
+                                        + " Search"
                                     }
                                     codeContent={searchImplementations[algorithm][language]}
                                 />
@@ -352,15 +387,15 @@ export default function Searching() {
                     </div>
                     <div className="flex flex-col gap-4 text-white">
                         <div className="grid grid-cols-9 gap-4 border-b border-gray-700 pb-2">
-                            <p>Timestamp</p>
-                            <p>Algorithm</p>
-                            <p>Language</p>
-                            <p>Memory</p>
-                            <p>Time Taken</p>
-                            <p>Memory Usage</p>
-                            <p>CPU Usage</p>
-                            <p>Cost</p>
-                            <p>Status</p>
+                            <p className="text-red-200">Time</p>
+                            <p className="text-blue-300">Algorithm</p>
+                            <p className="text-blue-300">Language</p>
+                            <p className="text-blue-300">Memory</p>
+                            <p className="text-red-200">Iterations</p>
+                            <p className="text-red-200">Comparisons</p>
+                            <p className="text-red-200">Time Taken</p>
+                            <p className="text-red-200">Cost</p>
+                            <p className="text-blue-300">Status</p>
                         </div>
                         {testHistory.length > 0 ? (
                             <div>
@@ -369,24 +404,25 @@ export default function Searching() {
                                         key={result.timestampRaw}
                                         className="grid grid-cols-9 gap-4">
                                         <p>
-                                            {result.status === 'PENDING'
+                                            {result.executionStatus === 'PENDING' || (Date.now() - result.timestampRaw) < 1000
                                                 ? 'Just now'
-                                                : prettyMs(Date.now() - result.timestampRaw, { secondsDecimalDigits: 1 }) + ' ago'
+                                                : prettyMs(Date.now() - result.timestampRaw, { secondsDecimalDigits: 0 }) + ' ago'
                                             }
                                         </p>
                                         <p>{result.algorithm.toLowerCase()}</p>
                                         <p>{result.language.toLowerCase()}</p>
-                                        <p>{result.memory} MB</p>
-                                        <p>{result.timeTaken}s</p>
-                                        <p>{result.memoryUsage} MB</p>
-                                        <p>{result.cpuUsage}%</p>
+                                        <p>{result.memorySize?.replace('MB_', '') || ''} mb</p>
+                                        <p>{result.iterations}</p>
+                                        <p>{result.comparisons}</p>
+                                        <p>{result.timeTaken.toFixed(6)}s</p>
                                         <p>£{result.cost.toFixed(8)}</p>
+
                                         <p className={
-                                            result.status === 'SUCCESS' ? 'text-green-500' :
-                                                result.status === 'FAILED' ? 'text-red-500' :
+                                            result.executionStatus === 'SUCCESS' ? 'text-green-500' :
+                                                result.executionStatus === 'FAILED' ? 'text-red-500' :
                                                     'text-amber-500'
                                         }>
-                                            {result.status.toLowerCase()}
+                                            {result.executionStatus.toLowerCase()}
                                         </p>
                                     </div>
                                 ))}

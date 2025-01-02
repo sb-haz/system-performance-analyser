@@ -3,7 +3,7 @@ package com.systemperformanceanalyser.orchestrator_service.algo_benchmarks.searc
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public enum Region {
-    @JsonProperty("eu-west-2") EU_WEST_2,
-    @JsonProperty("us-east-1") US_EAST_1,
-    @JsonProperty("eu-central-1") EU_CENTRAL_1
+    EU_WEST_2,
+    US_EAST_1,
+    EU_CENTRAL_1
 }

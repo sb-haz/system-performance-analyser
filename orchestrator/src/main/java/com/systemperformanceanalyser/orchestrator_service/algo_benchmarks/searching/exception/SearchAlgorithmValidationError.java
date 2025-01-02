@@ -2,4 +2,8 @@ package com.systemperformanceanalyser.orchestrator_service.algo_benchmarks.searc
 
 public class SearchAlgorithmValidationError extends RuntimeException {
 
+    public SearchAlgorithmValidationError(String message) {
+        super(message);
+    }
+
 }

@@ -1,143 +1,117 @@
 package com.systemperformanceanalyser.orchestrator_service.algo_benchmarks.searching.service;
 
+import com.systemperformanceanalyser.orchestrator_service.algo_benchmarks.searching.controller.SearchController;
 import com.systemperformanceanalyser.orchestrator_service.algo_benchmarks.searching.exception.SearchAlgorithmValidationError;
-import com.systemperformanceanalyser.orchestrator_service.algo_benchmarks.searching.model.enums.AlgorithmType;
-import com.systemperformanceanalyser.orchestrator_service.algo_benchmarks.searching.model.SearchRequest;
-import com.systemperformanceanalyser.orchestrator_service.algo_benchmarks.searching.model.SearchResult;
-import com.systemperformanceanalyser.orchestrator_service.algo_benchmarks.searching.model.enums.Status;
+import com.systemperformanceanalyser.orchestrator_service.algo_benchmarks.searching.model.*;
+import com.systemperformanceanalyser.orchestrator_service.algo_benchmarks.searching.model.enums.*;
+import com.amazonaws.services.lambda.AWSLambda;
+import com.amazonaws.services.lambda.model.InvokeRequest;
+import com.amazonaws.services.lambda.model.InvokeResult;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.systemperformanceanalyser.orchestrator_service.algo_benchmarks.searching.validator.SearchRequestValidator;
+import com.systemperformanceanalyser.orchestrator_service.algo_benchmarks.searching.validator.SearchResultValidator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
-import java.util.Random;
-import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service
 public class SearchService {
-    private static final String NUMBERS_AND_COMMAS_ONLY_REGEX = "^[1-9](,[1-9])*$";
 
-    public SearchResult orchestrateSearch(SearchRequest request) throws InterruptedException {
-//        validateSearchRequest(request);
+    private static final Logger logger = LoggerFactory.getLogger(SearchService.class);
 
-        SearchResult result = new SearchResult();
-        Random random = new Random();
+    @Autowired
+    private AWSLambda awsLambda;
+    @Autowired
+    private ObjectMapper objectMapper;
+    @Autowired
+    private SearchRequestValidator searchRequestValidator;
+    @Autowired
+    private SearchResultValidator lambdaResultValidator;
+    @Autowired
+    private SearchRequestSanitiser searchRequestSanitiser;
 
-        result.setTimestamp(new Date().toString());
-        result.setTimestampRaw(System.currentTimeMillis());
-        result.setAlgorithm(String.valueOf(request.getAlgorithm()));
-        result.setLanguage(String.valueOf(request.getLanguage()));
-        result.setMemory(request.getMemorySize().getValue());
-        result.setTimeTaken(Double.parseDouble(String.format("%.4f", random.nextDouble(0.0001, 0.01))));
-        result.setMemoryUsage(Double.parseDouble(String.format("%.2f", random.nextDouble(1.5, 3))));
-        result.setCpuUsage(Double.parseDouble(String.format("%.1f", random.nextDouble(7, 25))));
-        result.setCost(Double.parseDouble(String.format("%.8f", random.nextDouble(0.00000001, 0.000001))));
-        result.setStatus(Status.SUCCESS);
-        return result;
+    public SearchResult performSearch(SearchRequest request) {
+        try {
+            searchRequestValidator.validateRequest(request);
+            SearchRequest sanitisedSearchRequest = searchRequestSanitiser.sanitise(request);
+            return invokeSearchLambda(sanitisedSearchRequest);
+        } catch (Exception e) {
+            return createErrorResult(request, e);
+        }
     }
 
-    private void validateSearchRequest(SearchRequest request) {
-        // if null or empty
-        if (request.getArray() == null || request.getArray().length() == 0)
-            throw new SearchAlgorithmValidationError();
-        if (request.getTarget() == null || request.getTarget().length() == 0)
-            throw new SearchAlgorithmValidationError();
-        if (request.getAlgorithm() == null || request.getAlgorithm().toString().length() == 0)
-            throw new SearchAlgorithmValidationError();
-        if (request.getLanguage() == null || request.getLanguage().toString().length() == 0)
-            throw new SearchAlgorithmValidationError();
+    private SearchResult invokeSearchLambda(SearchRequest request) {
+        logger.info("starting lambda call process");
+        try {
+            String functionName = request.getLanguage().toString().toLowerCase()
+                    + "-search-"
+                    + request.getMemorySize().getValue();
+            logger.debug("using lambda function: {}", functionName);
 
-        int target = Integer.parseInt(request.getTarget());
+            String requestPayload = objectMapper.writeValueAsString(request);
+            logger.debug("prepared request payload: {}", requestPayload);
 
-        // 1. validate input array
-        //  if  too long
-        if (request.getArray().length() >= 1000)
-            throw new SearchAlgorithmValidationError();
+            InvokeRequest invokeRequest = new InvokeRequest()
+                    .withFunctionName(functionName)
+                    .withPayload(requestPayload);
 
-        // if comma seperated format
-        Pattern pattern = Pattern.compile(NUMBERS_AND_COMMAS_ONLY_REGEX);
-        Matcher matcher = pattern.matcher(request.getArray());
-        if (!matcher.matches())
-            throw new SearchAlgorithmValidationError();
+            logger.info("sending request to lambda");
+            InvokeResult lambdaResult = awsLambda.invoke(invokeRequest);
+            logger.info("received response from lambda");
 
-        // if numbers are valid after removing numbers
-        // might not need this thanks to above regex
-        String[] charArray = request.getArray().split(",");
-        for (int i = 0; i < charArray.length; i++) {
+            String responsePayload = new String(lambdaResult.getPayload().array());
+            logger.debug("lambda raw response: {}", responsePayload);
+
+            if (lambdaResult.getFunctionError() != null) {
+                logger.error("lambda execution failed with error: {}", lambdaResult.getFunctionError());
+                throw new RuntimeException("lambda function error: " + lambdaResult.getFunctionError());
+            }
+
             try {
-                Integer.parseInt(charArray[i]);
-            } catch (NumberFormatException e) {
-                throw new SearchAlgorithmValidationError();
+                logger.debug("trying to parse lambda response");
+                SearchResult searchResult = objectMapper.readValue(responsePayload, SearchResult.class);
+                logger.info("successfully parsed search result: {}", searchResult);
+
+                lambdaResultValidator.validateRequest(searchResult);
+                logger.debug("search result validation passed");
+
+                return searchResult;
+
+            } catch (Exception e) {
+                logger.error("failed to parse lambda response: {}", e.getMessage());
+                throw new RuntimeException("failed to parse lambda response", e);
             }
+
+        } catch (Exception e) {
+            logger.error("lambda call failed: {}", e.getMessage());
+            return createErrorResult(request, e);
         }
-
-        // if numbers are sorted
-        int[] intArray = new int[charArray.length];
-        for (int i = 0; i < charArray.length; i++) {
-            intArray[i] = Integer.parseInt(charArray[i]);
-            if (i != 0 && intArray[i] < intArray[i - 1]) {
-                throw new SearchAlgorithmValidationError();
-            }
-        }
-
-        // 2 .validate target number
-        // if number
-        try {
-            Integer.parseInt(request.getTarget());
-        } catch (NumberFormatException e) {
-            throw new SearchAlgorithmValidationError();
-        }
-
-        // if too long
-        if (request.getTarget().length() >= 1000) throw new SearchAlgorithmValidationError();
-
-        // if less than or higher than biggest number
-        if (target < intArray[0] || target > intArray[intArray.length])
-            throw new SearchAlgorithmValidationError();
-
-        // 3. validate search method
-        // if doesn't match enum type
-        try {
-            AlgorithmType.valueOf(request.getAlgorithm().toString());
-        } catch (IllegalArgumentException e) {
-            throw new SearchAlgorithmValidationError();
-        }
-
-        // 4. validate programming language
-        // if doesn't match enum type
-        try {
-            AlgorithmType.valueOf(request.getAlgorithm().toString());
-        } catch (IllegalArgumentException e) {
-            throw new SearchAlgorithmValidationError();
-        }
-
-        // 5. validate instance type info (type, region etc)
     }
 
-    private void setupComputeInstance() {
-        // prepares execution environment
-    }
 
-    private void executeSearchAlgorithm() {
-        // call worker service
-        // track execution time, memory usage etc.
-        // capture success or failure
-    }
+    private SearchResult createErrorResult(SearchRequest request, Exception error) {
+        logger.error("creating error result");
+        logger.error("error details: {}", error.getMessage(), error);
 
-    private void calculateResourceCost() {
-        // compute instance costs
-        // cost of other aws services
-        // execution time etc.
+        return SearchResult.builder()
+                .timestamp(new Date().toString())
+                .timestampRaw(System.currentTimeMillis())
+                .array(request.getArray())
+                .target(request.getTarget())
+                .algorithm(request.getAlgorithm())
+                .language(request.getLanguage())
+                .memorySize(request.getMemorySize())
+                .region(request.getRegion())
+                .timeTaken(0)
+                .iterations(0)
+                .comparisons(0)
+                .cost(0)
+                .executionStatus(ExecutionStatus.FAILED)
+                .searchStatus(SearchStatus.NOT_FOUND)
+                .foundIndex(-1)
+                .build();
     }
-
-    private void saveTestResults(SearchResult result) {
-        // record all metrics and results
-    }
-
-    private void buildSearchResponse() {
-        // compile all results
-        // format metrics
-        // create final response object
-    }
-
 }

@@ -3,15 +3,19 @@ package com.systemperformanceanalyser.orchestrator_service.algo_benchmarks.searc
 import com.systemperformanceanalyser.orchestrator_service.algo_benchmarks.searching.model.SearchRequest;
 import com.systemperformanceanalyser.orchestrator_service.algo_benchmarks.searching.model.SearchResult;
 import com.systemperformanceanalyser.orchestrator_service.algo_benchmarks.searching.service.SearchService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/algo-benchmarks/search")
-@CrossOrigin(origins = "http://localhost:3000")  // For development
+@RequestMapping("algos/search")
+@CrossOrigin(origins = {"${app.cors.allowed-origins}"})
 public class SearchController {
 
+    private static final Logger logger = LoggerFactory.getLogger(SearchController.class);
     private final SearchService searchService;
 
     @Autowired
@@ -19,15 +23,20 @@ public class SearchController {
         this.searchService = searchService;
     }
 
-    @PostMapping("execute")
-    public ResponseEntity<SearchResult> executeSearch(@RequestBody SearchRequest request) {
+    @PostMapping
+    public ResponseEntity<SearchResult> search(@Validated @RequestBody SearchRequest request) {
+        logger.info("Search request: {}", request.toString());
+
         try {
-            SearchResult result = searchService.orchestrateSearch(request);
+            SearchResult result = searchService.performSearch(request);
+            logger.info("Search result: {}", result.toString());
             return ResponseEntity.ok(result);
+        } catch (IllegalArgumentException e) {
+            logger.warn("Invalid request parameters: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
         } catch (Exception e) {
-            System.out.println("Error occurred: " + e.getMessage());
+            logger.error("Error processing search request", e);
             return ResponseEntity.internalServerError().build();
         }
     }
-
 }
