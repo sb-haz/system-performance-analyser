@@ -1,35 +1,40 @@
 locals {
-  # memory sizes for lambda functions in MB
   memory_sizes = [128, 256, 512, 1024, 2048]
-  # relative path to compiled jar
-  jar_path = "${path.root}/../lambdas/algorithms/searching/java-searching/build/libs/java-searching-1.0-SNAPSHOT.jar"
+
+  language_configs = {
+    java = {
+      runtime     = "java17"
+      handler     = "HandleSearch::handleRequest"
+      source_path = "${path.root}/../lambdas/algorithms/searching/java-searching/build/libs/java-searching-1.0-SNAPSHOT.jar"
+    }
+    python = {
+      runtime     = "python3.9"
+      handler     = "handler.handle_request"
+      source_path = "${path.root}/../lambdas/algorithms/searching/python-searching/python-searching.zip"
+    }
+  }
 }
 
 resource "aws_lambda_function" "search_functions" {
-  # create one lambda function per memory size (6 in total)
-  # java-search-128
-  # java-search-256
-  # java-search-512
-  # java-search-1024
-  # java-search-2048
-  # java-search-10240
-  # generate map of memory sizes, string values
-  for_each = toset([for size in local.memory_sizes : tostring(size)])
+  for_each = {
+    for pair in setproduct(keys(local.language_configs), local.memory_sizes) :
+    "${pair[0]}-search-${pair[1]}" => {
+      language = pair[0]
+      memory   = pair[1]
+    }
+  }
 
-  # lambda config
-  filename = local.jar_path
-  function_name = "java-search-${each.value}" # creates name e.g. java-search-128
-  role = var.role # iam role arn passed from parent module
-  handler  = "HandleSearch::handleRequest"  # entry class n method
-  # runtime config
-  memory_size = tonumber(each.value) # convert string back to nums
-  timeout = 30 # execution time limit
-  runtime = "java17"
+  filename      = lookup(local.language_configs[each.value.language], "source_path")
+  function_name = each.key
+  role          = var.role
+  handler       = lookup(local.language_configs[each.value.language], "handler")
+  runtime       = lookup(local.language_configs[each.value.language], "runtime")
+  memory_size   = each.value.memory
+  timeout       = 30
 
-  # tags for organisation
   tags = {
     Algorithm = "search"
-    Language  = "java"
-    Memory    = each.value
+    Language  = each.value.language
+    Memory    = each.value.memory
   }
 }

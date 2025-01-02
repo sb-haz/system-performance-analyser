@@ -5,7 +5,7 @@ import CodeModal from '@/components/ui/CodeModal'
 import GenerateModal from '@/components/ui/GenerateModal'
 import { searchImplementations } from './searchImplementations'
 import prettyMs from 'pretty-ms'
-import { X, History, Clock, Database, BarChart, LineChart, ListFilter, Archive } from 'lucide-react'
+import { X, LineChart, } from 'lucide-react'
 
 export default function Searching() {
     // test settings
@@ -39,7 +39,7 @@ export default function Searching() {
         timestamp: string // formatted string for displayin
         timestampRaw: number // unix timestamp (ms) for calc
 
-        array: String,
+        array: string,
         target: number,
 
         algorithm: Algorithm
@@ -254,8 +254,8 @@ export default function Searching() {
                                     >
                                         <option value="JAVA">Java</option>
                                         <option value="PYTHON">Python</option>
-                                        <option value="JAVASCRIPT">JavaScript</option>
-                                        <option value="CSHARP">C#</option>
+                                        <option value="JAVASCRIPT" disabled>JavaScript</option>
+                                        <option value="CSHARP" disabled>C#</option>
                                     </select>
                                 </div>
                             </div>

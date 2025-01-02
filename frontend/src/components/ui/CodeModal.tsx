@@ -7,7 +7,7 @@ interface CodeModalProps {
     codeContent: string;
 }
 
-export default function ({ isOpen, onClose, title, codeContent }: CodeModalProps) {
+export default function CodeModal({ isOpen, onClose, title, codeContent }: CodeModalProps) {
     if (!isOpen) return null;
 
     return (
@@ -24,14 +24,14 @@ export default function ({ isOpen, onClose, title, codeContent }: CodeModalProps
 
                 {/* Title */}
                 <h2 className="text-xl font-bold mb-4">{title}</h2>
-                
+
                 {/* Code box */}
                 <div className="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto">
                     <pre>
                         <code>{codeContent}</code>
                     </pre>
                 </div>
-                
+
             </div>
         </div>
     )

@@ -7,12 +7,12 @@ interface GenerateModalProps {
     setNumArray: (array: string) => void;
 }
 
-export default function ({ isOpen, runOnClose, setNumArray }: GenerateModalProps) {
-    if (!isOpen) return null;
-
+export default function GenerateModal({ isOpen, runOnClose, setNumArray }: GenerateModalProps) {
     const [min, setMin] = useState<number>(1);
     const [max, setMax] = useState<number>(10000);
     const [isRandom, setIsRandom] = useState<boolean>(false);
+
+    if (!isOpen) return null;
 
     const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!isNaN(Number(e.target.value))) {
@@ -27,7 +27,6 @@ export default function ({ isOpen, runOnClose, setNumArray }: GenerateModalProps
     }
 
     const generateNumbers = () => {
-
         if (max > 100000) {
             alert("Max must be less than 100,000")
             return
@@ -39,7 +38,7 @@ export default function ({ isOpen, runOnClose, setNumArray }: GenerateModalProps
         }
 
         // make array
-        let numbers = [];
+        const numbers = [];
         for (let i = min; i <= max; i++) {
             numbers.push(i)
         }
@@ -59,7 +58,6 @@ export default function ({ isOpen, runOnClose, setNumArray }: GenerateModalProps
     return (
         <div className="fixed inset-0 bg-black flex justify-center items-center z-100">
             <div className="border border-white rounded-lg p-6 w-full max-w-2xl relative">
-                
                 {/* close */}
                 <button
                     onClick={runOnClose}
@@ -71,7 +69,7 @@ export default function ({ isOpen, runOnClose, setNumArray }: GenerateModalProps
                 <h2 className="text-xl font-bold mb-4">Generate Numbers</h2>
 
                 <div className="flex flex-col gap-4">
-                    {/* Min input */}
+                    {/* min input */}
                     <div>
                         <p>Min</p>
                         <input
@@ -81,7 +79,7 @@ export default function ({ isOpen, runOnClose, setNumArray }: GenerateModalProps
                             className="w-full p-2 border rounded text-black"
                         />
                     </div>
-                    {/* Max input */}
+                    {/* max input */}
                     <div>
                         <p>Max</p>
                         <input
@@ -103,7 +101,7 @@ export default function ({ isOpen, runOnClose, setNumArray }: GenerateModalProps
                     </div>
                 </div>
 
-                {/* Generate button */}
+                {/* generate button */}
                 <div className="mt-4 flex justify-end">
                     <button
                         onClick={generateNumbers}
@@ -112,7 +110,6 @@ export default function ({ isOpen, runOnClose, setNumArray }: GenerateModalProps
                         Generate
                     </button>
                 </div>
-
             </div>
         </div>
     )
