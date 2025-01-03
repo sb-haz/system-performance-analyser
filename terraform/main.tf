@@ -1,10 +1,19 @@
+#################################################
+#                    CORE                       #
+#################################################
+
 provider "aws" {
   region = var.aws_region
 }
 
-# Create IAM role for Lambda functions
+#################################################
+#                   LAMBDA                      #
+#################################################
+
+# create an iam role that lambda functions can use
+# allows lambda to execute and access aws services
 resource "aws_iam_role" "lambda_role" {
-  name = "search_algorithm_lambda_role"
+  name = "algorithm_lambda_role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -20,14 +29,25 @@ resource "aws_iam_role" "lambda_role" {
   })
 }
 
-# Attach basic Lambda execution policy
+# basic permissions that all lambda functions need
+# attach to the iam role we just made
 resource "aws_iam_role_policy_attachment" "lambda_basic" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
   role       = aws_iam_role.lambda_role.name
 }
 
-# Call the search module
+# module to create lambda functions for search implementations
 module "search_lambdas" {
   source   = "./modules/algorithm_lambdas/search"
-  role     = aws_iam_role.lambda_role.arn  # Changed from role_arn to role
+  role     = aws_iam_role.lambda_role.arn
 }
+
+# module to create lambda functions for sort implementations
+module "sort_lambdas" {
+  source   = "./modules/algorithm_lambdas/sort"
+  role     = aws_iam_role.lambda_role.arn
+}
+
+#################################################
+#                  FARGATE                      #
+#################################################

@@ -5,12 +5,12 @@ import CodeModal from '@/components/ui/CodeModal'
 import GenerateModal from '@/components/ui/GenerateModal'
 import { searchImplementations } from './searchImplementations'
 import prettyMs from 'pretty-ms'
-import { X, LineChart, } from 'lucide-react'
+import { X, LineChart, Sparkles, Play, Loader, Braces } from 'lucide-react'
 
 export default function Searching() {
     // test settings
     const [numArray, setNumArray] = useState("1,2,3,4,5,6,7,8,9,10")
-    const [numTarget, setNumTarget] = useState<number>(25)
+    const [numTarget, setNumTarget] = useState<number>(7)
     type Algorithm = "LINEAR" | "BINARY" | "JUMP" | "INTERPOLATION"
     const [algorithm, setAlgorithm] = useState<Algorithm>("LINEAR")
     type Language = "JAVA" | "PYTHON" | "JAVASCRIPT" | "CSHARP"
@@ -174,7 +174,7 @@ export default function Searching() {
 
     return (
         <div>
-            <h1 className="text-3xl mb-8 text-white">Algorithm Benchmarks {">"} Searching</h1>
+            <h1 className="text-3xl mb-8 text-white">Searching Benchmarks</h1>
 
             <div className="flex flex-col gap-4">
                 <div className="grid grid-cols-2 gap-8">
@@ -185,14 +185,14 @@ export default function Searching() {
                             {/* testt settings */}
                             <button
                                 onClick={() => setSettingsView("TEST")}
-                                className={`px-4 py-2 rounded text-gray-200 ${settingsView === "TEST" ? "border border-pink-600" : "border-black"}`}
+                                className={`px-4 py-2 rounded text-gray-200 ${settingsView === "TEST" ? "border border-pink-600" : "hover:bg-pink-600"}`}
                             >
                                 Test Settings
                             </button>
                             {/* server settings */}
                             <button
                                 onClick={() => setSettingsView("SERVER")}
-                                className={`px-4 py-2 rounded text-gray-200 ${settingsView === "SERVER" ? "border border-pink-600" : "border-black"}`}
+                                className={`px-4 py-2 rounded text-gray-200 ${settingsView === "SERVER" ? "border border-pink-600" : "hover:bg-pink-600"}`}
                             >
                                 Server Settings
                             </button>
@@ -212,9 +212,9 @@ export default function Searching() {
                                         />
                                         <button
                                             onClick={() => setGenerateModalOpen(true)}
-                                            className="bg-white-400 border border-pink-600 hover:bg-pink-600 text-white px-4 py-2 rounded-md"
+                                            className="pink-button flex items-center gap-1"
                                         >
-                                            Generate
+                                            Generate <Sparkles size={18} />
                                         </button>
                                         <GenerateModal
                                             isOpen={generateModalOpen}
@@ -239,10 +239,10 @@ export default function Searching() {
                                         onChange={handleAlgorithmChange}
                                         className="w-full p-2 border rounded text-black"
                                     >
-                                        <option value="LINEAR">Linear</option>
-                                        <option value="BINARY">Binary</option>
-                                        <option value="JUMP">Jump</option>
-                                        <option value="INTERPOLATION">Interpolation</option>
+                                        <option value="LINEAR">Linear Search</option>
+                                        <option value="BINARY">Binary Search</option>
+                                        <option value="JUMP">Jump Search</option>
+                                        <option value="INTERPOLATION">Interpolation Search</option>
                                     </select>
                                 </div>
                                 <div>
@@ -352,9 +352,10 @@ export default function Searching() {
                                 {/* display code imply */}
                                 <button
                                     onClick={() => setCodeModalOpen(true)}
-                                    className="bg-white-400 border border-pink-600 hover:bg-pink-600 text-white px-4 py-2 rounded-md"
+                                    className="pink-button flex items-center gap-1"
                                 >
                                     View Code
+                                    <Braces size={16} />
                                 </button>
                                 <CodeModal
                                     isOpen={codeModalOpen}
@@ -371,9 +372,13 @@ export default function Searching() {
                                 <button
                                     onClick={runTest}
                                     disabled={isTestRunning}
-                                    className="bg-white-400 bg-pink-600 hover:bg-pink-600 text-white px-4 py-2 rounded-md"
+                                    className="pink-button flex items-center gap-1"
                                 >
-                                    {isTestRunning ? "Running Test..." : "Run Test"}
+                                    {isTestRunning ? (
+                                        <>Running Test... <Loader className="animate-spin" size={18} /></>
+                                    ) : (
+                                        <>Run Test <Play size={18} /></>
+                                    )}
                                 </button>
                             </div>
                         </div>
@@ -436,14 +441,12 @@ export default function Searching() {
                     {testHistory.length > 0 && (
                         <button
                             onClick={() => setTestHistory([])}
-                            className="bg-white-400 border border-gray-400 hover:bg-pink-600 text-white px-4 py-2 rounded-md flex items-center gap-2"
+                            className="pink-button flex items-center gap-1"
                         >
                             Clear Results <X size={18} />
                         </button>
                     )}
-                    <button
-                        className="bg-white-400 border border-gray-400 hover:bg-pink-600 text-white px-4 py-2 rounded-md flex items-center gap-2"
-                    >
+                    <button className="pink-button flex items-center gap-1">
                         Historical Tests <LineChart size={18} />
                     </button>
                 </div>

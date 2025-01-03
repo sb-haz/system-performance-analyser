@@ -4,13 +4,19 @@ import { X } from "lucide-react";
 interface GenerateModalProps {
     isOpen: boolean,
     runOnClose: () => void,
-    setNumArray: (array: string) => void;
+    setNumArray: (array: string) => void,
+    randomDefault?: boolean;
 }
 
-export default function GenerateModal({ isOpen, runOnClose, setNumArray }: GenerateModalProps) {
+export default function GenerateModal({
+    isOpen,
+    runOnClose,
+    setNumArray,
+    randomDefault = false
+}: GenerateModalProps) {
     const [min, setMin] = useState<number>(1);
     const [max, setMax] = useState<number>(10000);
-    const [isRandom, setIsRandom] = useState<boolean>(false);
+    const [isRandom, setIsRandom] = useState<boolean>(randomDefault);
 
     if (!isOpen) return null;
 
