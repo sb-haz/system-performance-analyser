@@ -350,7 +350,7 @@ export default function Sorting() {
                                     className="pink-button flex items-center gap-1"
                                 >
                                     {isTestRunning ? (
-                                        <>Running Test... <Loader className="animate-spin" size={18} /></>
+                                        <>Run Test <Loader className="animate-spin" size={18} /></>
                                     ) : (
                                         <>Run Test <Play size={18} /></>
                                     )}
