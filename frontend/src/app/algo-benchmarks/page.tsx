@@ -17,7 +17,7 @@ export default function AlgoBenchmarks() {
                     <button className="pink-button">Sorting Algorithms</button>
                 </Link>
 
-                <Link href="/algo-benchmarks/graph">
+                <Link href="/algo-benchmarks/path-finding">
                     <button className="pink-button">Path Finding</button>
                 </Link>
             </div>
