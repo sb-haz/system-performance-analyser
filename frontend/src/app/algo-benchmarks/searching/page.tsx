@@ -254,8 +254,8 @@ export default function Searching() {
                                     >
                                         <option value="JAVA">Java</option>
                                         <option value="PYTHON">Python</option>
-                                        <option value="JAVASCRIPT" disabled>JavaScript</option>
-                                        <option value="CSHARP" disabled>C#</option>
+                                        <option value="JAVASCRIPT">JavaScript</option>
+                                        <option value="CSHARP">C#</option>
                                     </select>
                                 </div>
                             </div>
