@@ -14,8 +14,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "System Performance Analyser",
+  title: "System Bench",
   description: "System Performance Analyser",
+  icons: {
+    icon: '/favicon.png'
+  }
 };
 
 export default function RootLayout({

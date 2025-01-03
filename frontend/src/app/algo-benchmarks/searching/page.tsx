@@ -174,7 +174,7 @@ export default function Searching() {
 
     return (
         <div>
-            <h1 className="text-3xl mb-8">Algorithm Benchmarks {">"} Searching</h1>
+            <h1 className="text-3xl mb-8 text-white">Algorithm Benchmarks {">"} Searching</h1>
 
             <div className="flex flex-col gap-4">
                 <div className="grid grid-cols-2 gap-8">
@@ -185,14 +185,14 @@ export default function Searching() {
                             {/* testt settings */}
                             <button
                                 onClick={() => setSettingsView("TEST")}
-                                className={`px-4 py-2 rounded ${settingsView === "TEST" ? "border border-pink-100" : "border-black"}`}
+                                className={`px-4 py-2 rounded text-gray-200 ${settingsView === "TEST" ? "border border-pink-600" : "border-black"}`}
                             >
                                 Test Settings
                             </button>
                             {/* server settings */}
                             <button
                                 onClick={() => setSettingsView("SERVER")}
-                                className={`px-4 py-2 rounded ${settingsView === "SERVER" ? "border border-pink-100" : "border-black"}`}
+                                className={`px-4 py-2 rounded text-gray-200 ${settingsView === "SERVER" ? "border border-pink-600" : "border-black"}`}
                             >
                                 Server Settings
                             </button>
