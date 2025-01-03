@@ -1,4 +1,4 @@
-import Button from '@/components/ui/Button'
+import Link from 'next/link'
 
 export default function Home() {
   return (
@@ -11,14 +11,31 @@ export default function Home() {
 
       {/* content */}
       <div className="flex flex-col gap-4 w-fit py-4">
-        <Button href="/algo-benchmarks">Algorithm Benchmarks</Button>
-        <Button href="/distributed-computing">Distributed Computing</Button>
-        <Button href="/caching-patterns">Caching Patterns</Button>
-        <Button href="/queue-systems">Queue Systems</Button>
-        <Button href="/database-patterns">Database Patterns</Button>
-        <Button href="/algo-benchmarks">Learning Resources</Button>
+        <Link href="/algo-benchmarks">
+          <button className="pink-button">Algorithm Benchmarks</button>
+        </Link>
+
+        <Link href="/distributed-computing">
+          <button className="pink-button">Distributed Computing</button>
+        </Link>
+
+        <Link href="/caching-patterns">
+          <button className="pink-button">Caching Patterns</button>
+        </Link>
+
+        <Link href="/queue-systems">
+          <button className="pink-button">Queue Systems</button>
+        </Link>
+
+        <Link href="/database-patterns">
+          <button className="pink-button">Database Patterns</button>
+        </Link>
+
+        <Link href="/algo-benchmarks">
+          <button className="pink-button">Learning Resources</button>
+        </Link>
       </div>
-      
+
     </div>
   );
 }

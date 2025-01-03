@@ -1,4 +1,4 @@
-import Button from '@/components/ui/Button'
+import Link from 'next/link'
 
 export default function AlgoBenchmarks() {
     return (
@@ -9,9 +9,17 @@ export default function AlgoBenchmarks() {
             </div>
             {/* Content */}
             <div className="flex flex-col gap-4 w-fit py-4">
-                <Button href="/algo-benchmarks/searching">Searching Algorithms</Button>
-                <Button href="/algo-benchmarks/sorting">Sorting Algorithms</Button>
-                <Button href="/algo-benchmarks/graph">Graph Algorithms</Button>
+                <Link href="/algo-benchmarks/searching">
+                    <button className="pink-button">Searching Algorithms</button>
+                </Link>
+
+                <Link href="/algo-benchmarks/sorting">
+                    <button className="pink-button">Sorting Algorithms</button>
+                </Link>
+
+                <Link href="/algo-benchmarks/graph">
+                    <button className="pink-button">Path Finding</button>
+                </Link>
             </div>
         </div>
     )
