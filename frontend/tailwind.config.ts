@@ -11,6 +11,14 @@ export default {
         background: "var(--background)",
         foreground: "var(--foreground)",
       },
+      fontFamily: {
+        sans: ['var(--font-geist-sans)'],
+        mono: ['var(--font-geist-mono)'],
+        quicksand: ['var(--font-quicksand)'],
+        nunito: ['var(--font-nunito)'],
+        comfortaa: ['var(--font-comfortaa)'],
+        varelaround: ['var(--font-varela-round)'],
+      },
     },
   },
   paths: {

@@ -44,7 +44,7 @@ export default function Home() {
             <div className="grid grid-cols-2 gap-4 text-white mb-4">
               <div>
                 <p className="font-medium">Frontend</p>
-                <p className="text-sm">Vercel Hobby Plan</p>
+                <p className="text-sm">Vercel</p>
                 <p>£0.00</p>
               </div>
               <div>
