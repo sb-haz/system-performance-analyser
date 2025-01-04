@@ -38,13 +38,13 @@ resource "aws_iam_role_policy_attachment" "lambda_basic" {
 
 # module to create lambda functions for search implementations
 module "search_lambdas" {
-  source   = "./modules/algorithm_lambdas/search"
+  source   = "moduleslgorithm_lambdas/search"
   role     = aws_iam_role.lambda_role.arn
 }
 
 # module to create lambda functions for sort implementations
 module "sort_lambdas" {
-  source   = "./modules/algorithm_lambdas/sort"
+  source   = "moduleslgorithm_lambdas/sort"
   role     = aws_iam_role.lambda_role.arn
 }
 

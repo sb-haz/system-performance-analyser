@@ -5,12 +5,12 @@ locals {
     java = {
       runtime     = "java17"
       handler     = "HandleSearch::handleRequest"
-      source_path = "${path.root}/../lambdas/algorithms/searching/java-searching/build/libs/java-searching-1.0-SNAPSHOT.jar"
+      source_path = "${path.root}/../../lambdas/algorithms/searching/java-searching/build/libs/java-searching-1.0-SNAPSHOT.jar"
     }
     python = {
       runtime     = "python3.9"
       handler     = "handler.handle_request"
-      source_path = "${path.root}/../lambdas/algorithms/searching/python-searching/python-searching.zip"
+      source_path = "${path.root}/../../lambdas/algorithms/searching/python-searching/python-searching.zip"
     }
   }
 }
