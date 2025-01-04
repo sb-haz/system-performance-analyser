@@ -10,15 +10,15 @@ export default function AlgoBenchmarks() {
             {/* Content */}
             <div className="flex flex-col gap-4 w-fit py-4">
                 <Link href="/algo-benchmarks/searching">
-                    <button className="pink-button">Searching Algorithms</button>
+                    <button className="pink-button">Searching</button>
                 </Link>
 
                 <Link href="/algo-benchmarks/sorting">
-                    <button className="pink-button">Sorting Algorithms</button>
+                    <button className="pink-button">Sorting</button>
                 </Link>
 
                 <Link href="/algo-benchmarks/path-finding">
-                    <button className="pink-button">Path Finding Algorithms</button>
+                    <button className="pink-button">Path Finding</button>
                 </Link>
             </div>
         </div>
