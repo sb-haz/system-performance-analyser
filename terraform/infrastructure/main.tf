@@ -141,6 +141,43 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_ecr_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
 
+# create task role for application permissions
+resource "aws_iam_role" "ecs_task_role" {
+  name = "ecs-task-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+# add lambda invoke permissions to task role
+resource "aws_iam_role_policy" "lambda_invoke_policy" {
+  name = "lambda-invoke-policy"
+  role = aws_iam_role.ecs_task_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "lambda:InvokeFunction"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 ###########################################
 # Orchestrator service on fargate
 # Setup ecs cluster and alb
@@ -154,8 +191,9 @@ module "fargate_service" {
   private_subnet_ids = aws_subnet.private_subnets[*].id
   public_subnet_ids = aws_subnet.public_subnets[*].id
 
-  # pass in the ECS execution role ARN we created
+  # pass in both the execution role and task role ARNs
   ecs_task_execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  ecs_task_role_arn           = aws_iam_role.ecs_task_role.arn  # New parameter
 
   # pass in ECR repository URL
   ecr_repository_url = "${var.aws_account_id}.dkr.ecr.eu-west-2.amazonaws.com/systembench_repo"

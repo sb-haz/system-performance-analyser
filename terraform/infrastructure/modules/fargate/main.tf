@@ -5,44 +5,44 @@ resource "aws_ecs_cluster" "main" {
 
 # alb security group
 resource "aws_security_group" "alb" {
-  name        = "alb-sg"
-  vpc_id      = var.vpc_id
+  name   = "alb-sg"
+  vpc_id = var.vpc_id
 
   # incoming
   ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
+    from_port = 80
+    to_port   = 80
+    protocol  = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
   # outgoing
   egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    from_port = 0
+    to_port   = 0
+    protocol  = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
 
 # fargate security group
 resource "aws_security_group" "fargate" {
-  name        = "fargate-sg"
-  vpc_id      = var.vpc_id
+  name   = "fargate-sg"
+  vpc_id = var.vpc_id
 
   # incoming allow 8080
   ingress {
-    from_port       = 8080
-    to_port         = 8080
-    protocol        = "tcp"
+    from_port = 8080
+    to_port   = 8080
+    protocol  = "tcp"
     security_groups = [aws_security_group.alb.id]
   }
 
   # outgoing
   egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    from_port = 0
+    to_port   = 0
+    protocol  = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
@@ -52,8 +52,8 @@ resource "aws_lb" "main" {
   name               = "systembench-alb"
   internal           = false
   load_balancer_type = "application"
-  security_groups    = [aws_security_group.alb.id]
-  subnets           = var.public_subnet_ids
+  security_groups = [aws_security_group.alb.id]
+  subnets            = var.public_subnet_ids
 }
 
 # what alb should target
@@ -66,7 +66,7 @@ resource "aws_lb_target_group" "main" {
 
   # check spring boot health endpoint
   health_check {
-    path                = "/actuator/health"
+    path                = "/api/v1/actuator/health"
     healthy_threshold   = 2
     unhealthy_threshold = 10
   }
@@ -75,8 +75,8 @@ resource "aws_lb_target_group" "main" {
 # alb listener
 resource "aws_lb_listener" "main" {
   load_balancer_arn = aws_lb.main.arn
-  port             = 80
-  protocol         = "HTTP"
+  port              = 80
+  protocol          = "HTTP"
 
   default_action {
     type             = "forward"
@@ -92,30 +92,35 @@ resource "aws_cloudwatch_log_group" "systembench_logs" {
 
 # ecs task definition
 resource "aws_ecs_task_definition" "main" {
-  family                   = "systembench"
-  network_mode             = "awsvpc"
+  family             = "systembench"
+  network_mode       = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = 256
-  memory                   = 512
-  execution_role_arn       = var.ecs_task_execution_role_arn
+  cpu                = 256
+  memory             = 512
+  execution_role_arn = var.ecs_task_execution_role_arn
+  task_role_arn = var.ecs_task_role_arn
 
-  container_definitions = jsonencode([{
-    name  = "systembench"
-    image = "${var.ecr_repository_url}:latest"
-    portMappings = [{
-      containerPort = 8080
-      hostPort      = 8080
-      protocol      = "tcp"
-    }]
-    logConfiguration = {
-      logDriver = "awslogs"
-      options = {
-        "awslogs-group"         = "/ecs/systembench"
-        "awslogs-region"        = "eu-west-2"
-        "awslogs-stream-prefix" = "ecs"
+  container_definitions = jsonencode([
+    {
+      name  = "systembench"
+      image = "${var.ecr_repository_url}:latest"
+      portMappings = [
+        {
+          containerPort = 8080
+          hostPort      = 8080
+          protocol      = "tcp"
+        }
+      ]
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = "/ecs/systembench"
+          "awslogs-region"        = "eu-west-2"
+          "awslogs-stream-prefix" = "ecs"
+        }
       }
     }
-  }])
+  ])
 }
 
 # ecs service
@@ -127,7 +132,7 @@ resource "aws_ecs_service" "main" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets         = var.private_subnet_ids
+    subnets = var.private_subnet_ids
     security_groups = [aws_security_group.fargate.id]
   }
 
